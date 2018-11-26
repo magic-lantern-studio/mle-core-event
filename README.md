@@ -44,7 +44,7 @@ WizzerWorks – [@WizzerWorks](https://twitter.com/WizzerWorks) – msm@wizzerwo
 
 Distributed under the MIT license. See ``LICENSE`` for more information.
 
-[https://github.com/magic-lantern-studio/mle-core-event](https://github.com/WizzerWorks/)
+[https://github.com/magic-lantern-studio/mle-core-event](https://github.com/magic-lantern-stuiod/mle-core-event/)
 
 ## Contributing
 
@@ -56,5 +56,5 @@ Distributed under the MIT license. See ``LICENSE`` for more information.
 
 <!-- Markdown link & img dfn's -->
 [build-image]: https://img.shields.io/appveyor/ci/gruntjs/grunt.svg
-[test-url]: https://wizzerworks.com
+[test-url]: http://wizzerworks.com
 [wiki]: https://github.com/magic-lantern-studio/mle-core-event/wiki
