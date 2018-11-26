@@ -15,3 +15,15 @@ TEST(MlePqTest, DefaultConstrutor) {
 
     EXPECT_TRUE(q != NULL);
 }
+
+TEST(MlePqTest, InitSizeConstructur) {
+    // This test is named "InitSizeConstructor", and belongs to the "MlePqTest"
+    // test case.
+
+    unsigned int size = 100;
+
+    MlePQ *q = new MlePQ(size);
+
+    EXPECT_TRUE(q != NULL);
+    EXPECT_EQ(q->getNumItems(), size);
+}
