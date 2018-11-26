@@ -1,2 +1,2 @@
-SUBDIRS=libmlevent libmleventtest include exampleProgram
+SUBDIRS=libmlevent libmleventtest include exampleProgram unittest
 ACLOCAL_AMFLAGS=-I m4

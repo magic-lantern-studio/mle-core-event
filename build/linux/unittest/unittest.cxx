@@ -31,14 +31,25 @@
 //
 // COPYRIGHT_END
 
-#ifndef __LIBMLEVENTTEST_H_INCLUDED_
-#define __LIBMLEVENTTEST_H_INCLUDED_
-
 // Include system header files.
-#include "stdio.h"
+#include <stdio.h>
 
-// This function is used to initialize the Event Manager unit test
-// environment.
-extern bool initMlEventTest();
+// Include Google Test header files.
+#include "gtest/gtest.h"
 
-#endif /* __LIBMLEVENTTEST_H_INCLUDED_ */
+// Include Magic Lantern Math library header files.
+#include "libmleventtest.h"
+
+GTEST_API_ int main(int argc, char **argv)
+{
+    printf("Running main() from unittest.\n");
+
+    // Initialize MlEvnet Test. Forces libmleventtest.so to be loaded.
+    initMlEventTest();
+
+    // Initialize Google Test.
+    testing::InitGoogleTest(&argc, argv);
+
+    // Execute tests.
+    return RUN_ALL_TESTS();
+}
