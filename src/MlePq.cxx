@@ -102,11 +102,11 @@ void MlePQ::insert(MlePQItem &item)
     pthread_mutex_lock(&m_mutex);
 #endif
 
-    // Grow m_fpqQueue if needed
+    // grow m_fpqQueue if needed
     if (m_fpqNumItems == m_fpqSize)
         grow();
 
-    // Insert item
+    // insert item
     m_fpqNumItems++;
     m_fpqQueue[m_fpqNumItems] = item;
     upHeap(m_fpqNumItems);
@@ -234,6 +234,7 @@ MlBoolean MlePQ::inQueue(int priority)
     // declare local variables
     MlBoolean retValue = TRUE;
 
+    // thread-safe logic is handled in findItem()
     if (findItem(priority) == 0)
         retValue = FALSE;
 
@@ -246,6 +247,7 @@ MlBoolean MlePQ::inQueue(MlePQItem &item)
     // declare local variables
     MlBoolean retValue = TRUE;
 
+    // thread-safe logic is handled in findItem()
     if (findItem(item) == 0)
         retValue = FALSE;
 
@@ -275,6 +277,10 @@ unsigned int MlePQ::copyQueue(MlePQItem **queue)
 #if defined(MLE_DEBUG)
 void MlePQ::print(void)
 {
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_mutex);
+#endif
+
     // print queue to standard out
     for (unsigned int i = 1; i <= m_fpqNumItems; i++)
     {
@@ -283,6 +289,10 @@ void MlePQ::print(void)
         fprintf(ML_DEBUG_OUTPUT_FILE, "\tData: %d\n", (int)m_fpqQueue[i].m_data);
         fflush(ML_DEBUG_OUTPUT_FILE);
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_mutex);
+#endif
 }
 
 
@@ -328,12 +338,14 @@ void MlePQ::clear(void)
 
 MlBoolean MlePQ::grow(void)
 {
+    // thread-safe logic is handled in _grow()
     return(_grow(MLE_INC_QSIZE));
 }
 
 
 MlBoolean MlePQ::grow(unsigned int size)
 {
+    // thread-safe logic is handled in _grow()
     return(_grow(size));
 }
 
@@ -389,7 +401,11 @@ MlBoolean MlePQ::_grow(unsigned int size)
     // declare local variables
     unsigned int memSize;
     MlePQItem *newQ;
+    MlBoolean retValue = TRUE;
 
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_mutex);
+#endif
 
     // add 1 to requested size; m_fpqQueue[0] is reserved for a
     // sentinel value (used by the "heap" algorithms)
@@ -399,19 +415,23 @@ MlBoolean MlePQ::_grow(unsigned int size)
     newQ = new MlePQItem[memSize];
     if (newQ == NULL) {
         // set error status here - XXX
-        return(FALSE);
+        retValue = FALSE;
     } else {
         if (m_fpqQueue) {
             memcpy(newQ,m_fpqQueue,(m_fpqSize + 1) * sizeof(MlePQItem));
             delete [] m_fpqQueue;
         }
         m_fpqQueue = newQ;
+
+        // bump size of queue
+        m_fpqSize += size;
     }
 
-    // bump size of queue
-    m_fpqSize += size;
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_mutex);
+#endif
 
-    return(TRUE);
+    return(retValue);
 }
 
 
@@ -475,6 +495,10 @@ MlBoolean MlePQ::peek(unsigned int k,MlePQItem &item)
     // declare local variables
     MlBoolean retValue = TRUE;
 
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_mutex);
+#endif
+
     if ((k > 0) && (k <= m_fpqNumItems)) {
         item.m_key = m_fpqQueue[k].m_key;
         item.m_data = m_fpqQueue[k].m_data;
@@ -483,6 +507,10 @@ MlBoolean MlePQ::peek(unsigned int k,MlePQItem &item)
         item.m_data = NULL;
         retValue = FALSE;
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_mutex);
+#endif
 
     return retValue;
 }
