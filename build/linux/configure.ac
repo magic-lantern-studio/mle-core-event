@@ -25,5 +25,6 @@ LT_INIT
 AC_CONFIG_FILES(Makefile
                 exampleProgram/Makefile
                 libmlevent/Makefile
+                libmleventtest/Makefile
                 include/Makefile)
 AC_OUTPUT
