@@ -35,25 +35,104 @@
 #include "gtest/gtest.h"
 
 // Include Magic Lantern header files.
+#include "mle/mlMalloc.h"
 #include "mle/MlePq.h"
 
-TEST(MlePqTest, DefaultConstrutor) {
+TEST(MlePqTest, DefaultConstructor) {
     // This test is named "DefaultConstructor", and belongs to the "MlePqTest"
     // test case.
 
     MlePQ *q = new MlePQ();
-
     EXPECT_TRUE(q != NULL);
 }
 
-TEST(MlePqTest, InitSizeConstructur) {
+TEST(MlePqTest, InitSizeConstructor) {
     // This test is named "InitSizeConstructor", and belongs to the "MlePqTest"
     // test case.
 
     unsigned int size = 100;
 
     MlePQ *q = new MlePQ(size);
-
     EXPECT_TRUE(q != NULL);
-    EXPECT_EQ(q->getNumItems(), size);
+    EXPECT_EQ(q->getNumItems(), 0);
+}
+
+TEST(MlePqTest, Insert) {
+    // This test is named "Insert", and belongs to the "MlePqTest" test case.
+
+    MlePQ *q = new MlePQ();
+    EXPECT_TRUE(q != NULL);
+
+    MlePQItem testItem;
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        testItem.m_key = i;
+        testItem.m_data = (void *)i;
+        q->insert(testItem);
+    }
+    EXPECT_EQ(q->getNumItems(), MLE_INC_QSIZE);
+
+    delete q;
+}
+
+TEST(MlePqTest, Remove) {
+    // This test is named "Remove", and belongs to the "MlePqTest" test case.
+
+    MlePQ *q = new MlePQ();
+    EXPECT_TRUE(q != NULL);
+
+    MlePQItem testItem;
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        testItem.m_key = i;
+        testItem.m_data = (void *)i;
+        q->insert(testItem);
+    }
+    EXPECT_EQ(q->getNumItems(), MLE_INC_QSIZE);
+
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        q->remove(testItem);
+    }
+    EXPECT_EQ(q->getNumItems(), 0);
+
+    delete q;
+}
+
+TEST(MlePqTest, InsertAndTest) {
+    // This test is named "InsertAndTest", and belongs to the "MlePqTest" test case.
+
+    MlePQ *q = new MlePQ();
+    EXPECT_TRUE(q != NULL);
+
+    MlePQItem testItem;
+    testItem.m_key = 350;
+    testItem.m_data = mlMalloc(1024);
+    q->insert(testItem);
+    EXPECT_EQ(q->getNumItems(), 1);
+
+    q->remove(testItem);
+    EXPECT_EQ(testItem.m_key, 350);
+    EXPECT_TRUE(testItem.m_data != NULL);
+    EXPECT_EQ(q->getNumItems(), 0);
+
+    mlFree(testItem.m_data);
+    delete q;
+}
+
+TEST(MlePqTest, Delete) {
+    // This test is named "Delete", and belongs to the "MlePqTest" test case.
+
+    MlePQ *q = new MlePQ();
+    EXPECT_TRUE(q != NULL);
+
+    MlePQItem testItem;
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        testItem.m_key = i;
+        testItem.m_data = (void *)i;
+        q->insert(testItem);
+    }
+    EXPECT_EQ(q->getNumItems(), MLE_INC_QSIZE);
+
+    q->destroy();
+    EXPECT_EQ(q->getNumItems(), MLE_INC_QSIZE-1);
+
+    delete q;
 }

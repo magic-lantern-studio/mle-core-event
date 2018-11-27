@@ -118,9 +118,10 @@ class MLE_EVENTMGR_API MlePQ
      * If the action is successful,
      * "item" will contain the data referenced by the removed entry.
      *
-     * @param item The item to remove from the queue.
+     * @param item The output parameter containing the item
+     * removed from the queue.
      *
-     * @return If the item is successfully removed, then TRUE will be
+     * @return If an item is successfully removed, then TRUE will be
      * returned. Otherwise, FALSE will be returned.
      */
     virtual MlBoolean remove(MlePQItem &item);
@@ -129,14 +130,15 @@ class MLE_EVENTMGR_API MlePQ
      * @brief Remove all items for specified priority.
      *
      * If the action is successful,
-     * "item" will point to an array containing all data matching the
-     * requested priority.
+     * "items" will point to an array containing all data matching the
+     * requested priority. It is the responsibility of the caller to
+     * delete the returned array.
      *
-     * @param priority The prioority of the items which are to be removed.
-     * @param items A pointer to an array of items matching the
-     * requeted priority.
+     * @param priority The priority of the items which are to be removed.
+     * @param items A pointer to an array of items that were removed, matching the
+     * requested priority.
      * @param numItems A pointer to the number of items in the returned
-     * arary.
+     * array.
      *
      * @return If the items are successfully removed, then TRUE will be
      * returned. Otherwise, FALSE will be returned.

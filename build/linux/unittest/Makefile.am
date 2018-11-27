@@ -28,7 +28,10 @@ unittest_LDADD = \
 	$(GTEST_DIR)/libgtest.a
 
 # Linker options for a.out
-unittest_LDFLAGS = -rpath `cd $(top_srcdir);pwd`/libmlevent/.libs -pthread
+unittest_LDFLAGS = \
+    -Wl, -rpath `cd $(top_srcdir);pwd`/libmlevent/.libs \
+    -Wl, -rpath `cd $(top_srcdir);pwd`/libmleventtest/.libs \
+    -pthread
 
 # Compiler options for a.out
 unittest_CPPFLAGS = \

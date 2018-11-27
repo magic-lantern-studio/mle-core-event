@@ -338,14 +338,12 @@ void MlePQ::clear(void)
 
 MlBoolean MlePQ::grow(void)
 {
-    // thread-safe logic is handled in _grow()
     return(_grow(MLE_INC_QSIZE));
 }
 
 
 MlBoolean MlePQ::grow(unsigned int size)
 {
-    // thread-safe logic is handled in _grow()
     return(_grow(size));
 }
 
@@ -403,10 +401,6 @@ MlBoolean MlePQ::_grow(unsigned int size)
     MlePQItem *newQ;
     MlBoolean retValue = TRUE;
 
-#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
-#endif
-
     // add 1 to requested size; m_fpqQueue[0] is reserved for a
     // sentinel value (used by the "heap" algorithms)
     memSize = m_fpqSize + size + 1;
@@ -426,10 +420,6 @@ MlBoolean MlePQ::_grow(unsigned int size)
         // bump size of queue
         m_fpqSize += size;
     }
-
-#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
-#endif
 
     return(retValue);
 }
@@ -645,7 +635,7 @@ MlePQ::operator delete(void *p)
 }
 
 
-#ifdef UNITTEST
+#ifdef TEST
 
 // Include Magic Lantern header files.
 #include "mle/MleDebug.h"
@@ -661,6 +651,7 @@ int main(int argc,char *argv[])
     MlBoolean runAll = TRUE;
 
     // Parse arguments.
+    // TBD - this is where runtTest may be set for executing a specific test.
 
     //
     // TEST 1 - test basic insertion and removal.
@@ -671,8 +662,8 @@ int main(int argc,char *argv[])
         size = origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i;
-            testItem.data = (void *)i;
+            testItem.m_key = i;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -702,8 +693,8 @@ int main(int argc,char *argv[])
         size = 2 * origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i / 5;
-            testItem.data = (void *)i;
+            testItem.m_key = i / 5;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -733,8 +724,8 @@ int main(int argc,char *argv[])
         size = 2 * origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i / 5;
-            testItem.data = (void *)i;
+            testItem.m_key = i / 5;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -760,8 +751,8 @@ int main(int argc,char *argv[])
         size = 2 * origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i / 5;
-            testItem.data = (void *)i;
+            testItem.m_key = i / 5;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -785,7 +776,7 @@ int main(int argc,char *argv[])
         numItems = testQ.getNumItems();
         for (i = 0; i < numItems; i++) {
             testQ.remove(testItem);
-             fprintf(ML_DEBUG_OUTPUT_FILE, "Item: %d\n", i);
+            fprintf(ML_DEBUG_OUTPUT_FILE, "Item: %d\n", i);
             fprintf(ML_DEBUG_OUTPUT_FILE, "\tPriority: %d\n", testItem.key);
             fprintf(ML_DEBUG_OUTPUT_FILE, "\tData: %d\n", (int)testItem.data);
             fflush(ML_DEBUG_OUTPUT_FILE);
@@ -801,8 +792,8 @@ int main(int argc,char *argv[])
         size = 2 * origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i / 5;
-            testItem.data = (void *)i;
+            testItem.m_key = i / 5;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -819,7 +810,7 @@ int main(int argc,char *argv[])
 
             testQ.remove(size / 10,&foundItems,&numFoundItems);
             for (i = 0; i < numFoundItems; i++) {
-                 fprintf(ML_DEBUG_OUTPUT_FILE, "Item: %d\n", i);
+                fprintf(ML_DEBUG_OUTPUT_FILE, "Item: %d\n", i);
                 fprintf(ML_DEBUG_OUTPUT_FILE, "\tPriority: %d\n", foundItems[i].key);
                 fprintf(ML_DEBUG_OUTPUT_FILE, "\tData: %d\n", (int)foundItems[i].data);
                 fflush(ML_DEBUG_OUTPUT_FILE);
@@ -840,8 +831,8 @@ int main(int argc,char *argv[])
         size = 2 * origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i / 5;
-            testItem.data = (void *)i;
+            testItem.m_key = i / 5;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -883,14 +874,14 @@ int main(int argc,char *argv[])
         size = 2 * origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i / 5;
-            testItem.data = (void *)i;
+            testItem.m_key = i / 5;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
         for (i = 0; i < 100; i++) {
-            testItem.key = i;
-            testItem.data = (void *)i;
+            testItem.m_key = i;
+            testItem.m_data = (void *)i;
             secondQ.insert(testItem);
         }
 
@@ -933,8 +924,8 @@ int main(int argc,char *argv[])
         size = origSize;
 
         for (i = 0; i < size; i++) {
-            testItem.key = i;
-            testItem.data = (void *)i;
+            testItem.m_key = i;
+            testItem.m_data = (void *)i;
             testQ.insert(testItem);
         }
 
@@ -970,4 +961,4 @@ int main(int argc,char *argv[])
     return 0;
 }
 
-#endif /* UNITTEST */
+#endif /* TEST */
