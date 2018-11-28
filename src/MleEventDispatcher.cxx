@@ -72,7 +72,10 @@ MleEventDispatcher::MleEventDispatcher()
    m_tail(NULL),
    m_flags(0)
 {
-    // Do nothing extra.
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_init(&m_updateMutex, NULL);
+    pthread_mutex_init(&m_readMutex, NULL);
+#endif
 }
 
 
@@ -102,6 +105,11 @@ MleEventDispatcher::~MleEventDispatcher()
         nextNode = nextNode->m_next;
         mlFree(node);
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_destroy(&m_updateMutex);
+    pthread_mutex_destroy(&m_readMutex);
+#endif
 }
 
 
@@ -114,6 +122,11 @@ MleCallbackId MleEventDispatcher::installEventCB(
     MleEventNode *node;
     MleEventCBNode *cbNode;
     MlePQItem item;
+    MleCallbackId retValue = NULL;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Check if event node already exists.
     if ((node = _findEventNode(event)) == NULL) {
@@ -128,29 +141,35 @@ MleCallbackId MleEventDispatcher::installEventCB(
             node->m_next = NULL;
             _linkEventNode(node);
         } else {
-            // XXX -- set MLERRno here
-            return(NULL);
+            // XXX -- set g_mlErrno here
         }
     }
 
     // Install callback.
-    cbNode = (MleEventCBNode *) mlMalloc(sizeof(MleEventCBNode));
-    if (cbNode != NULL) {
-        cbNode->m_id = (MleCallbackId)cbNode;
-        cbNode->m_callback = callback;
-        cbNode->m_clientData = clientData;
-        cbNode->m_flags = MLE_EVMGR_SYSALLOC | MLE_EVMGR_ENABLED;
+    if (node != NULL) {
+        cbNode = (MleEventCBNode *) mlMalloc(sizeof(MleEventCBNode));
+        if (cbNode != NULL) {
+            cbNode->m_id = (MleCallbackId)cbNode;
+            cbNode->m_callback = callback;
+            cbNode->m_clientData = clientData;
+            cbNode->m_flags = MLE_EVMGR_SYSALLOC | MLE_EVMGR_ENABLED;
 
-        // Add callback node to priority queue.
-        item.m_key = 0;
-        item.m_data = (void *)cbNode;
-        node->m_callbacks->insert(item);
-    } else {
-        // XXX -- set MLERRno here
-        return NULL;
+            // Add callback node to priority queue.
+            item.m_key = 0;
+            item.m_data = (void *)cbNode;
+            node->m_callbacks->insert(item);
+
+            retValue = cbNode;
+        } else {
+            // XXX -- set g_mlErrno here
+        }
     }
 
-    return(cbNode);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -160,8 +179,13 @@ MlBoolean MleEventDispatcher::installEventCB(MleEventEntry *eventTable,int numEv
     MleEventNode *node;
     MleEventCBNode *cbNode;
     MlePQItem item;
+    MlBoolean retValue = ML_FALSE;
 
     MLE_ASSERT(eventTable);
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     for (int i = 0; i < numEvents; i++) {
         // Check if event node already exists.
@@ -175,31 +199,36 @@ MlBoolean MleEventDispatcher::installEventCB(MleEventEntry *eventTable,int numEv
                 node->m_next = NULL;
                 _linkEventNode(node);
             } else {
-                // XXX -- set MLERRno here
-                return ML_FALSE;
+                // XXX -- set g_mlErrno here
             }
         }
 
         // Install callback.
-        cbNode = (MleEventCBNode *) mlMalloc(sizeof(MleEventCBNode));
-        if (cbNode != NULL) {
-            cbNode->m_id = (MleCallbackId)cbNode;
-            cbNode->m_callback = eventTable[i].m_callback;
-            cbNode->m_clientData = eventTable[i].m_clientData;
-            cbNode->m_flags = MLE_EVMGR_SYSALLOC | MLE_EVMGR_ENABLED;
+        if (node != NULL) {
+            cbNode = (MleEventCBNode *) mlMalloc(sizeof(MleEventCBNode));
+            if (cbNode != NULL) {
+                cbNode->m_id = (MleCallbackId)cbNode;
+                cbNode->m_callback = eventTable[i].m_callback;
+                cbNode->m_clientData = eventTable[i].m_clientData;
+                cbNode->m_flags = MLE_EVMGR_SYSALLOC | MLE_EVMGR_ENABLED;
 
-            // add callback node to priority queue
-            item.m_key = 0;
-            item.m_data = (void *)cbNode;
-            node->m_callbacks->insert(item);
-        } else {
-            // XXX -- set MLERRno here
-            return ML_FALSE;
+                // add callback node to priority queue
+                item.m_key = 0;
+                item.m_data = (void *)cbNode;
+                node->m_callbacks->insert(item);
+
+                retValue = ML_TRUE;
+            } else {
+                // XXX -- set g_mlErrno here
+            }
         }
-
     }
 
-    return ML_TRUE;
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return retValue;
 }
 
 
@@ -209,11 +238,14 @@ MlBoolean MleEventDispatcher::uninstallEvent(MleEvent event)
     MleEventNode *node;
     MlePQItem item;
     unsigned int numCallbacks;
+    MlBoolean retValue = ML_FALSE;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Check if event already exists.
-    if ((node = _findEventNode(event)) == NULL) {
-        return(FALSE);
-    } else {
+    if ((node = _findEventNode(event)) != NULL) {
         // Destroy callback nodes.
         if (node->m_callbacks) {
             numCallbacks = node->m_callbacks->getNumItems();
@@ -228,9 +260,15 @@ MlBoolean MleEventDispatcher::uninstallEvent(MleEvent event)
         // Free node.
         _unlinkEventNode(node);
         mlFree(node);
+
+        retValue = ML_TRUE;
     }
 
-    return(TRUE);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -238,14 +276,23 @@ MlBoolean MleEventDispatcher::enableEvent(MleEvent event)
 {
     // Declare local variables.
     MleEventNode *node;
+    MlBoolean retValue = ML_FALSE;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Check if event already exists.
-    if ((node = _findEventNode(event)) == NULL)
-        return(FALSE);
-    else
+    if ((node = _findEventNode(event)) != NULL) {
         MLE_ENABLE_EVENT(node);
+        retValue = ML_TRUE;
+    }
 
-    return(TRUE);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -253,14 +300,23 @@ MlBoolean MleEventDispatcher::disableEvent(MleEvent event)
 {
     // Declare local variables.
     MleEventNode *node;
+    MlBoolean retValue = ML_FALSE;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Check if event already exists.
-    if ((node = _findEventNode(event)) == NULL)
-        return(FALSE);
-    else
+    if ((node = _findEventNode(event)) != NULL) {
         MLE_DISABLE_EVENT(node);
+        retValue = ML_TRUE;
+    }
 
-    return(TRUE);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -269,24 +325,31 @@ MlBoolean MleEventDispatcher::uninstallEventCB(MleEvent event,MleCallbackId id)
     // Declare local variables.
     MleEventNode *node;
     unsigned int index;
+    MlBoolean retValue = ML_FALSE;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Find event node.
-    if ((node = _findEventNode(event)) == NULL) {
-        return(FALSE);
-    } else {
+    if ((node = _findEventNode(event)) != NULL) {
         // Find callback node.
-        if ((index = _findEventCBNode(node,id)) == 0) {
-            return(FALSE);
-        } else {
+        if ((index = _findEventCBNode(node,id)) != 0) {
             // Destroy priority queue item.
             node->m_callbacks->destroyItem(index);
 
             // Free node.
             mlFree((MleEventCBNode *)id);
+
+            retValue = ML_TRUE;
         }
     }
 
-    return(TRUE);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -295,20 +358,26 @@ MlBoolean MleEventDispatcher::enableEventCB(MleEvent event,MleCallbackId id)
     // Declare local variables.
     MleEventNode *node;
     MleEventCBNode *cbNode;
+    MlBoolean retValue = ML_FALSE;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Find event node.
-    if ((node = _findEventNode(event)) == NULL) {
-        return(FALSE);
-    } else {
+    if ((node = _findEventNode(event)) != NULL) {
         // Find callback node.
-        if ((cbNode = (MleEventCBNode *)id) == NULL) {
-            return(FALSE);
-        } else {
+        if ((cbNode = (MleEventCBNode *)id) != NULL) {
             MLE_ENABLE_EVENT(cbNode);
+            retValue = ML_TRUE;
         }
     }
 
-    return(TRUE);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -317,20 +386,26 @@ MlBoolean MleEventDispatcher::disableEventCB(MleEvent event,MleCallbackId id)
     // Declare local variables.
     MleEventNode *node;
     MleEventCBNode *cbNode;
+    MlBoolean retValue = ML_FALSE;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Find event node.
-    if ((node = _findEventNode(event)) == NULL) {
-        return(FALSE);
-    } else {
-        // find callback node
-        if ((cbNode = (MleEventCBNode *)id) == NULL) {
-            return(FALSE);
-        } else {
+    if ((node = _findEventNode(event)) != NULL) {
+        // Find callback node.
+        if ((cbNode = (MleEventCBNode *)id) != NULL) {
             MLE_DISABLE_EVENT(cbNode);
+            retValue = ML_TRUE;
         }
     }
 
-    return(TRUE);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
+    return(retValue);
 }
 
 
@@ -341,6 +416,10 @@ MlBoolean MleEventDispatcher::changeEventCBPriority(
     MleEventNode *node;
     MlBoolean retValue;
     unsigned int index;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Find event node.
     if ((node = _findEventNode(event)) == NULL) {
@@ -353,6 +432,10 @@ MlBoolean MleEventDispatcher::changeEventCBPriority(
             retValue = node->m_callbacks->changeItem(index,key);
         }
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
 
     return(retValue);
 }
@@ -367,6 +450,10 @@ int MleEventDispatcher::dispatchEvent(MleEvent event,void *callData)
     MlePQItem item;
     unsigned int numCallbacks;
     int retValue = MLE_E_EVMGR_FAILEDDISPATCH;
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_updateMutex);
+#endif
 
     // Check if event already exists.
     if ((node = _findEventNode(event)) != NULL) {
@@ -395,7 +482,11 @@ int MleEventDispatcher::dispatchEvent(MleEvent event,void *callData)
             retValue = MLE_E_EVMGR_DISABLEDDISPATCH;
         }
     }
-    
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_updateMutex);
+#endif
+
     return(retValue);
 }
 

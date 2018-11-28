@@ -61,8 +61,8 @@
  */
 typedef struct MLE_EVENTMGR_API mlePQItem
 {
-    int m_key;              /** Element priority key. */
-    void *m_data;           /** Element data. */
+    int m_key;              /**< Element priority key. */
+    void *m_data;           /**< Element data. */
 } MlePQItem;
 
 typedef MlBoolean (*MlePQCallback)(MlePQItem &item,void *clientData);

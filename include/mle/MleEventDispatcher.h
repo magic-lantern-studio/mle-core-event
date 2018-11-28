@@ -48,6 +48,10 @@
 #ifdef WIN32
 #include <windows.h>
 #endif /* WIN32 */
+// Include system header files.
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#include <pthread.h>
+#endif
 
 // Include Magic Lantern header files.
 #include "mle/mlMalloc.h"
@@ -78,9 +82,9 @@ typedef void *MleCallbackId;
  */
 typedef struct MLE_EVENTMGR_API _MleEventCBNode
 {
-    unsigned long m_flags;            /**< Flags for ... */
-    MleCallbackId m_id;               /**< An event callback identifier. */
-    MleCallback m_callback;           /**< The event callback. */
+    unsigned long m_flags;      /**< Flags for ... */
+    MleCallbackId m_id;         /**< An event callback identifier. */
+    MleCallback m_callback;     /**< The event callback. */
     void *m_clientData;         /**< The event callback client data. */
 } MleEventCBNode;
 
@@ -120,7 +124,10 @@ class MLE_EVENTMGR_API MleEventDispatcher
     MleEventNode *m_head;             // Head of registered events.
     MleEventNode *m_tail;             // Tail of registered events.
     
-  // Declare member functions.
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_t m_updateMutex;
+    pthread_mutex_t m_readMutex;
+#endif
 
   public:
 
@@ -140,6 +147,9 @@ class MLE_EVENTMGR_API MleEventDispatcher
      * @param event The Magic Lantern event.
      * @param callback The event callback function.
      * @param cleintData The event callback client data.
+     *
+     * @return An unique identifier will be returned if the callback was
+     * successfully installed. Otherwise, <b>NULL</b> will be returned.
      */
     MleCallbackId installEventCB(
         MleEvent event,
@@ -152,8 +162,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      * @param eventTable A pointer to an array of event entries.
      * @param numEvents The number of event entries in the table.
      *
-     * @return <b>TRUE</b> will be returned if the events are successfully
-     * installed. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the events are successfully
+     * installed. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean installEventCB(MleEventEntry *eventTable,int numEvents);
 
@@ -162,8 +172,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      *
      * @param event The Magic Lantern event to uninstall.
      *
-     * @return <b>TRUE</b> will be returned if the event is successfully
-     * uninstalled. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event is successfully
+     * uninstalled. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean uninstallEvent(MleEvent event);
 
@@ -172,8 +182,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      *
      * @param event The Magic Lantern event to enable.
      *
-     * @return <b>TRUE</b> will be returned if the event is successfully
-     * enabled. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event is successfully
+     * enabled. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean enableEvent(MleEvent event);
 
@@ -182,8 +192,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      *
      * @param event The Magic Lantern event to disable.
      *
-     * @return <b>TRUE</b> will be returned if the event is successfully
-     * disabled. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event is successfully
+     * disabled. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean disableEvent(MleEvent event);
 
@@ -193,8 +203,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      * @param event The Magic Lantern event to uninstall.
      * @param id The callback identifier to uninstall.
      *
-     * @return <b>TRUE</b> will be returned if the event callback is successfully
-     * uninstalled. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event callback is successfully
+     * uninstalled. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean uninstallEventCB(MleEvent event,MleCallbackId id);
 
@@ -204,8 +214,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      * @param event The Magic Lantern event to enable.
      * @param id The callback identifier to enable.
      *
-     * @return <b>TRUE</b> will be returned if the event callback is successfully
-     * enabled. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event callback is successfully
+     * enabled. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean enableEventCB(MleEvent event,MleCallbackId id);
 
@@ -215,8 +225,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      * @param event The Magic Lantern event to disable.
      * @param id The callback identifier to disable.
      *
-     * @return <b>TRUE</b> will be returned if the event callback is successfully
-     * disabled. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event callback is successfully
+     * disabled. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean disableEventCB(MleEvent event,MleCallbackId id);
 
@@ -227,8 +237,8 @@ class MLE_EVENTMGR_API MleEventDispatcher
      * @param id The callback identifier to modify.
      * @param key The new priority.
      *
-     * @return <b>TRUE</b> will be returned if the event callback priority is successfully
-     * modified. Otherwise, <b>FALSE</b> will be returned.
+     * @return <b>ML_TRUE</b> will be returned if the event callback priority is successfully
+     * modified. Otherwise, <b>ML_FALSE</b> will be returned.
      */
     MlBoolean changeEventCBPriority(MleEvent event,MleCallbackId id,int key);
 
