@@ -80,6 +80,7 @@ class MLE_EVENTMGR_API MlePQ
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
     pthread_mutex_t m_mutex;
+    pthread_mutex_t m_readMutex;
 #endif
 
   public:

@@ -136,3 +136,25 @@ TEST(MlePqTest, Delete) {
 
     delete q;
 }
+
+TEST(MlePqTest, FindItem) {
+    // This test is named "FindItem", and belongs to the "MlePqTest" test case.
+
+    MlePQ *q = new MlePQ();
+    EXPECT_TRUE(q != NULL);
+
+    MlePQItem testItem;
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        testItem.m_key = i;
+        testItem.m_data = (void *)i;
+        q->insert(testItem);
+    }
+    EXPECT_EQ(q->getNumItems(), MLE_INC_QSIZE);
+
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        int index = q->findItem(i);
+        EXPECT_TRUE(index > 0);  // '0' indicates failure to find item.
+    }
+
+    delete q;
+}

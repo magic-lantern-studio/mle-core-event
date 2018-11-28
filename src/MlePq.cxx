@@ -71,6 +71,7 @@ MlePQ::MlePQ(void)
 {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
     pthread_mutex_init(&m_mutex, NULL);
+    pthread_mutex_init(&m_readMutex, NULL);
 #endif
 }
 
@@ -83,6 +84,7 @@ MlePQ::MlePQ(unsigned int size)
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
     pthread_mutex_init(&m_mutex, NULL);
+    pthread_mutex_init(&m_readMutex, NULL);
 #endif
 }
 
@@ -92,6 +94,7 @@ MlePQ::~MlePQ(void)
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
     pthread_mutex_destroy(&m_mutex);
+    pthread_mutex_destroy(&m_readMutex);
 #endif
 }
 
@@ -486,7 +489,7 @@ MlBoolean MlePQ::peek(unsigned int k,MlePQItem &item)
     MlBoolean retValue = TRUE;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_readMutex);
 #endif
 
     if ((k > 0) && (k <= m_fpqNumItems)) {
@@ -499,7 +502,7 @@ MlBoolean MlePQ::peek(unsigned int k,MlePQItem &item)
     }
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_readMutex);
 #endif
 
     return retValue;
@@ -512,11 +515,19 @@ unsigned int MlePQ::findItem(int priority)
     MlBoolean notFound = TRUE;
     unsigned int i = 1;
 
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_readMutex);
+#endif
+
     // find first item with specified priority
     while((notFound) && (i <= m_fpqNumItems)) {
         if (m_fpqQueue[i].m_key == priority) notFound = FALSE;
         else i++;
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_readMutex);
+#endif
 
     if (notFound) return(0);
     else return(i);
@@ -529,12 +540,20 @@ unsigned int MlePQ::findItem(MlePQItem &item)
     MlBoolean notFound = TRUE;
     unsigned int i = 1;
 
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_readMutex);
+#endif
+
     // find first item with specified priority
     while((notFound) && (i <= m_fpqNumItems)) {
         if ((m_fpqQueue[i].m_key == item.m_key) &&(m_fpqQueue[i].m_data == item.m_data))
             notFound = FALSE;
         else i++;
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_readMutex);
+#endif
 
     if (notFound) return(0);
     else return(i);
@@ -547,12 +566,21 @@ unsigned int MlePQ::findItem(MlePQCallback func,void *clientData)
     MlBoolean notFound = TRUE;
     unsigned int i = 1;
 
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_lock(&m_readMutex);
+#endif
+
     // find first item with specified priority
     while((notFound) && (i <= m_fpqNumItems)) {
+        // call callback function
         if (func(m_fpqQueue[i],clientData))
             notFound = FALSE;
         else i++;
     }
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    pthread_mutex_unlock(&m_readMutex);
+#endif
 
     if (notFound) return(0);
     else return(i);
