@@ -56,10 +56,13 @@
 #include "mle/MleEventMgr.h"
 
 
+/*
+ * Definition of an element in a MlePQ.
+ */
 typedef struct MLE_EVENTMGR_API mlePQItem
 {
-    int m_key;              // priority key
-    void *m_data;           // associated data
+    int m_key;              /** Element priority key. */
+    void *m_data;           /** Element data. */
 } MlePQItem;
 
 typedef MlBoolean (*MlePQCallback)(MlePQItem &item,void *clientData);
@@ -79,7 +82,7 @@ class MLE_EVENTMGR_API MlePQ
     unsigned int m_fpqNumItems;  // number of items in queue
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_t m_mutex;
+    pthread_mutex_t m_updateMutex;
     pthread_mutex_t m_readMutex;
 #endif
 
@@ -282,7 +285,8 @@ class MLE_EVENTMGR_API MlePQ
     /**
      * @brief Peek into queue for specified item.
      *
-     * @param k The index of the item to peek at.
+     * @param k The index of the item to peek at. k must equal to or
+     * greater than 1. A value of 0 will always return FALSE.
      * @param item A reference to an item that will contain the
      * contents of the found item that is being peeked at.
      *

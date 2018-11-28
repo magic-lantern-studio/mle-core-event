@@ -158,3 +158,23 @@ TEST(MlePqTest, FindItem) {
 
     delete q;
 }
+
+TEST(MlePqTest, Clear) {
+    // This test is named "Clear", and belongs to the "MlePqTest" test case.
+
+    MlePQ *q = new MlePQ();
+    EXPECT_TRUE(q != NULL);
+
+    MlePQItem testItem;
+    for (int i = 0; i < MLE_INC_QSIZE; i++) {
+        testItem.m_key = i;
+        testItem.m_data = (void *)i;
+        q->insert(testItem);
+    }
+    EXPECT_EQ(q->getNumItems(), MLE_INC_QSIZE);
+
+    q->clear();
+    EXPECT_EQ(q->getNumItems(), 0);
+
+    delete q;
+}

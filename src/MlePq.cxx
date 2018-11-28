@@ -70,7 +70,7 @@ MlePQ::MlePQ(void)
      m_fpqNumItems(0)
 {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_init(&m_mutex, NULL);
+    pthread_mutex_init(&m_updateMutex, NULL);
     pthread_mutex_init(&m_readMutex, NULL);
 #endif
 }
@@ -83,7 +83,7 @@ MlePQ::MlePQ(unsigned int size)
     m_fpqNumItems = 0;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_init(&m_mutex, NULL);
+    pthread_mutex_init(&m_updateMutex, NULL);
     pthread_mutex_init(&m_readMutex, NULL);
 #endif
 }
@@ -93,7 +93,7 @@ MlePQ::~MlePQ(void)
     if (m_fpqQueue) delete [] m_fpqQueue;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_destroy(&m_mutex);
+    pthread_mutex_destroy(&m_updateMutex);
     pthread_mutex_destroy(&m_readMutex);
 #endif
 }
@@ -102,7 +102,7 @@ MlePQ::~MlePQ(void)
 void MlePQ::insert(MlePQItem &item)
 {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     // grow m_fpqQueue if needed
@@ -115,7 +115,7 @@ void MlePQ::insert(MlePQItem &item)
     upHeap(m_fpqNumItems);
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 }
 
@@ -126,7 +126,7 @@ MlBoolean MlePQ::remove(MlePQItem &item)
     MlBoolean retValue = TRUE;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     if (m_fpqNumItems == 0) {
@@ -145,7 +145,7 @@ MlBoolean MlePQ::remove(MlePQItem &item)
     }
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 
     return(retValue);
@@ -160,7 +160,7 @@ MlBoolean MlePQ::remove(int priority,MlePQItem **items,unsigned int *numItems)
     MlBoolean retValue = TRUE;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     // allocate enough space for potential "hit" list
@@ -183,7 +183,7 @@ MlBoolean MlePQ::remove(int priority,MlePQItem **items,unsigned int *numItems)
     }
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 
     return(retValue);
@@ -195,7 +195,7 @@ MlBoolean MlePQ::replace(MlePQItem &item)
     MlBoolean retValue = TRUE;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     m_fpqQueue[0] = item;
@@ -204,7 +204,7 @@ MlBoolean MlePQ::replace(MlePQItem &item)
         retValue = FALSE;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 
     return(retValue);
@@ -261,7 +261,7 @@ MlBoolean MlePQ::inQueue(MlePQItem &item)
 unsigned int MlePQ::copyQueue(MlePQItem **queue)
 {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     if (m_fpqNumItems > 0) {
@@ -270,7 +270,7 @@ unsigned int MlePQ::copyQueue(MlePQItem **queue)
     } else *queue = NULL;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 
     return(m_fpqNumItems);
@@ -281,7 +281,7 @@ unsigned int MlePQ::copyQueue(MlePQItem **queue)
 void MlePQ::print(void)
 {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     // print queue to standard out
@@ -294,7 +294,7 @@ void MlePQ::print(void)
     }
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 }
 
@@ -328,13 +328,13 @@ void MlePQ::printSorted(void)
 void MlePQ::clear(void)
 {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     m_fpqNumItems = 0;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 }
 
@@ -435,7 +435,7 @@ MlBoolean MlePQ::changeItem(unsigned int k,int priority)
     MlBoolean retValue = TRUE;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     // check to see if there are any items in the queue
@@ -449,7 +449,7 @@ MlBoolean MlePQ::changeItem(unsigned int k,int priority)
     }
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 
     return(retValue);
@@ -462,7 +462,7 @@ void MlePQ::destroyItem(unsigned int k)
     int prevKey;
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_lock(&m_mutex);
+    pthread_mutex_lock(&m_updateMutex);
 #endif
 
     // check to see if there are any items in the queue
@@ -478,7 +478,7 @@ void MlePQ::destroyItem(unsigned int k)
     else if (m_fpqQueue[k].m_key > prevKey) upHeap(k);
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-    pthread_mutex_unlock(&m_mutex);
+    pthread_mutex_unlock(&m_updateMutex);
 #endif
 }
 
