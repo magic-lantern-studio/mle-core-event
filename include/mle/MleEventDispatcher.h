@@ -144,6 +144,9 @@ class MLE_EVENTMGR_API MleEventDispatcher
     /**
      * @brief Install the event callback for the specified event.
      *
+     * Events will be enabled by default. When the event is dispatched, the callback
+     * function will be invoked with the specified clientData.
+     *
      * @param event The Magic Lantern event.
      * @param callback The event callback function.
      * @param cleintData The event callback client data.

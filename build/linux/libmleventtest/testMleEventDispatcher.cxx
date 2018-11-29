@@ -137,3 +137,68 @@ TEST(MleEventDispatcherTest, DispatchEvent) {
 
     delete eventMgr;
 }
+
+TEST(MleEventDispatcherTest, DisableEvent) {
+    // This test is named "DisableEvent", and belongs to the "MleEventDispatcherTest"
+    // test case.
+    MlBoolean status;
+
+    MleEventDispatcher *eventMgr = new MleEventDispatcher();
+    EXPECT_TRUE(eventMgr != NULL);
+
+    // Install an event with callback used for dispatching.
+    MleCallbackId cbId[5];
+    for (int i = 0; i < 5; i++) cbId[i] = 0;
+    cbId[0] = eventMgr->installEventCB(EVENT_ONE,eventHndlr,(void *)"test");
+    EXPECT_TRUE(cbId[0] != 0);
+
+    status = eventMgr->disableEvent(EVENT_ONE);
+    EXPECT_TRUE(status);
+
+    // Test for unsuccessful dispatch.
+    int cbRetValue = eventMgr->dispatchEvent(EVENT_ONE,(void *)"Unit test.");
+    EXPECT_TRUE(cbRetValue != 0);
+
+    // Remove event.
+    status = eventMgr->uninstallEvent(EVENT_ONE);
+    EXPECT_TRUE(status);
+
+    delete eventMgr;
+}
+
+TEST(MleEventDispatcherTest, EnableEvent) {
+    // This test is named "EnableEvent", and belongs to the "MleEventDispatcherTest"
+    // test case.
+    MlBoolean status;
+
+    MleEventDispatcher *eventMgr = new MleEventDispatcher();
+    EXPECT_TRUE(eventMgr != NULL);
+
+    // Install an event with callback used for dispatching.
+    MleCallbackId cbId[5];
+    for (int i = 0; i < 5; i++) cbId[i] = 0;
+    cbId[0] = eventMgr->installEventCB(EVENT_ONE,eventHndlr,(void *)"test");
+    EXPECT_TRUE(cbId[0] != 0);
+
+    // Note that events are enabled by default when they are installed.
+    status = eventMgr->disableEvent(EVENT_ONE);
+    EXPECT_TRUE(status);
+
+    // Test for unsuccessful dispatch.
+    int cbRetValue = eventMgr->dispatchEvent(EVENT_ONE,(void *)"Unit test.");
+    EXPECT_TRUE(cbRetValue != 0);
+
+    // Re-enable the event.
+    status = eventMgr->enableEvent(EVENT_ONE);
+    EXPECT_TRUE(status);
+
+    // Test for successful dispatch.
+    cbRetValue = eventMgr->dispatchEvent(EVENT_ONE,(void *)"Unit test.");
+    EXPECT_TRUE(cbRetValue == 0);
+
+    // Remove event.
+    status = eventMgr->uninstallEvent(EVENT_ONE);
+    EXPECT_TRUE(status);
+
+    delete eventMgr;
+}
