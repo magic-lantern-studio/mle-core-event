@@ -1,4 +1,4 @@
-// COPYRTIGH_BEGIN
+// COPYRIGHT_BEGIN
 //
 // The MIT License (MIT)
 //
