@@ -42,10 +42,10 @@
 #include "mle/MlePq.h"
 
 // Array of thread identifiers.
-pthread_t tid[2];
+static pthread_t tid[2];
 
 // Thread function for reading queue.
-void *readqueue(void *arg)
+static void *readqueue(void *arg)
 {
     MlePQ *q = (MlePQ *)arg;
     EXPECT_TRUE(q != NULL);
@@ -61,7 +61,7 @@ void *readqueue(void *arg)
 }
 
 // Thread function for writing queue.
-void *writequeue(void *arg)
+static void *writequeue(void *arg)
 {
     MlePQ *q = (MlePQ *)arg;
     EXPECT_TRUE(q != NULL);
@@ -79,7 +79,7 @@ void *writequeue(void *arg)
 }
 
 // Thread function for examining queue.
-void *peekqueue(void *arg)
+static void *peekqueue(void *arg)
 {
     MlePQ *q = (MlePQ *)arg;
     EXPECT_TRUE(q != NULL);

@@ -9,7 +9,7 @@ lib_LTLIBRARIES = libmleventtest.la
 
 # Sources for libmleventtest
 libmleventtest_la_SOURCES = libmleventtest.cxx \
-	testMlePq.cxx testMlePqThread.cxx testMleEventDispatcher.cxx
+	testMlePq.cxx testMlePqThread.cxx testMleEventDispatcher.cxx testMleEventDispatcherThread.cxx
 
 # Linker options libTestProgram
 libmleventtest_la_LDFLAGS = 

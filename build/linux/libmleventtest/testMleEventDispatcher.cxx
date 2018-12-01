@@ -47,7 +47,7 @@ enum {
 };
 
 // Callback event handler.
-int eventHndlr(MleEvent event,void *callData,void *clientData)
+static int eventHndlr(MleEvent event,void *callData,void *clientData)
 {
     // Declare local variables.
     char *clientStr = (char *)clientData;
